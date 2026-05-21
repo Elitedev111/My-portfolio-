@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calculator — Olawale Excel</title>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100%; background:#000;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'DM Sans', sans-serif;
+  overflow:hidden;
+}
+
+/* PAGE BACKGROUND */
+body {
+  background: radial-gradient(ellipse at top, #1a1a2e 0%, #000 60%);
+  min-height:100vh;
+}
+
+/* BACK BUTTON */
+.back-link {
+  position:fixed; top:1.2rem; left:1.5rem; z-index:100;
+  color:rgba(255,255,255,0.4); text-decoration:none;
+  font-size:0.82rem; transition:color 0.3s;
+  display:flex; align-items:center; gap:0.4rem;
+}
+.back-link:hover { color:#fff; }
+
+/* PHONE SHELL */
+.phone {
+  width:380px;
+  background:linear-gradient(160deg, #1c1c1e, #0a0a0a);
+  border-radius:50px;
+  padding:14px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 40px 80px rgba(0,0,0,0.8),
+    0 0 120px rgba(0,120,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  position:relative;
+}
+
+/* PHONE NOTCH */
+.phone-notch {
+  width:120px; height:28px;
+  background:#0a0a0a; border-radius:0 0 20px 20px;
+  margin:0 auto 8px;
+  display:flex; align-items:center; justify-content:center;
+  gap:8px;
+}
+.notch-cam {
+  width:10px; height:10px; background:#1a1a1a;
+  border-radius:50%; border:2px solid #2a2a2a;
+}
+.notch-speaker {
+  width:50px; height:5px; background:#1a1a1a;
+  border-radius:10px;
+}
+
+/* SCREEN */
+.screen {
+  background:linear-gradient(180deg, #1c1c1e 0%, #111 100%);
+  border-radius:36px; overflow:hidden;
+  padding:20px 0 0;
+}
+
+/* DISPLAY */
+.display {
+  padding:10px 24px 16px;
+  min-height:160px;
+  display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-end;
+  position:relative;
+}
+.expression {
+  font-size:1rem; color:rgba(255,255,255,0.35);
+  min-height:24px; margin-bottom:4px;
+  word-break:break-all; text-align:right;
+  font-weight:300; letter-spacing:0.02em;
+}
+.result {
+  font-size:4rem; font-weight:200; color:#fff;
+  letter-spacing:-0.02em; line-height:1;
+  transition:font-size 0.2s ease;
+  word-break:break-all; text-align:right;
+}
+.result.small { font-size:2.8rem; }
+.result.xsmall { font-size:2rem; }
+
+/* HISTORY */
+.history-btn {
+  position:absolute; top:12px; left:16px;
+  background:rgba(255,255,255,0.08); border:none; color:rgba(255,255,255,0.5);
+  width:32px; height:32px; border-radius:50%; cursor:pointer;
+  font-size:0.75rem; transition:all 0.3s; display:flex; align-items:center; justify-content:center;
+}
+.history-btn:hover { background:rgba(255,255,255,0.15); color:#fff; }
+
+/* HISTORY PANEL */
+.history-panel {
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  background:rgba(18,18,20,0.97); border-radius:36px;
+  padding:20px; z-index:50; display:none;
+  flex-direction:column;
+  backdrop-filter:blur(20px);
+}
+.history-panel.open { display:flex; }
+.history-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:16px;
+}
+.history-title { color:#fff; font-size:1rem; font-weight:600; }
+.history-close {
+  background:rgba(255,255,255,0.1); border:none; color:#fff;
+  width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:0.8rem;
+}
+.history-list {
+  flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:0.6rem;
+}
+.history-list::-webkit-scrollbar { width:3px; }
+.history-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:3px; }
+.history-entry {
+  background:rgba(255,255,255,0.05); border-radius:12px;
+  padding:0.8rem 1rem; cursor:pointer; transition:background 0.2s;
+  border:1px solid rgba(255,255,255,0.05);
+}
+.history-entry:hover { background:rgba(255,255,255,0.1); }
+.history-expr { font-size:0.78rem; color:rgba(255,255,255,0.4); margin-bottom:2px; }
+.history-res { font-size:1.1rem; color:#fff; font-weight:500; }
+.history-empty { color:rgba(255,255,255,0.3); text-align:center; margin-top:2rem; font-size:0.85rem; }
+.history-clear {
+  background:rgba(255,59,48,0.15); border:1px solid rgba(255,59,48,0.2);
+  color:#ff3b30; padding:0.6rem; border-radius:12px; cursor:pointer;
+  font-size:0.82rem; margin-top:0.8rem; transition:all 0.2s;
+}
+.history-clear:hover { background:rgba(255,59,48,0.25); }
+
+/* DIVIDER */
+.divider {
+  height:1px; background:rgba(255,255,255,0.06); margin:0 20px 4px;
+}
+
+/* BUTTONS GRID */
+.buttons {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:12px; padding:16px 16px 20px;
+}
+
+/* BASE BUTTON */
+.btn {
+  aspect-ratio:1;
+  border:none; border-radius:50%;
+  font-size:1.4rem; font-weight:400;
+  cursor:pointer; transition:all 0.12s ease;
+  display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.btn:active { transform:scale(0.92); }
+.btn::after {
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background:rgba(255,255,255,0.15); opacity:0; transition:opacity 0.1s;
+}
+.btn:active::after { opacity:1; }
+
+/* BUTTON TYPES */
+.btn-func {
+  background:#333335; color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.btn-func:hover { background:#3a3a3c; }
+
+.btn-op {
+  background:#ff9f0a; color:#fff;
+  box-shadow:0 4px 16px rgba(255,159,10,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  font-size:1.6rem;
+}
+.btn-op:hover { background:#ffaa2a; }
+.btn-op.selected { background:#fff; color:#ff9f0a; }
+
+.btn-num {
+  background:#2c2c2e; color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.btn-num:hover { background:#3a3a3c; }
+
+/* ZERO BUTTON — wide */
+.btn-zero {
+  grid-column:span 2;
+  aspect-ratio:unset;
+  border-radius:50px;
+  justify-content:flex-start;
+  padding-left:28px;
+  font-size:1.4rem;
+}
+
+/* RIPPLE */
+@keyframes ripple {
+  from { transform:scale(0); opacity:0.4; }
+  to   { transform:scale(4); opacity:0; }
+}
+.ripple-effect {
+  position:absolute; width:50px; height:50px;
+  background:rgba(255,255,255,0.3); border-radius:50%;
+  animation:ripple 0.5s ease-out forwards;
+  pointer-events:none;
+}
+
+/* PHONE BOTTOM BAR */
+.phone-bar {
+  height:5px; background:rgba(255,255,255,0.15);
+  border-radius:10px; width:120px; margin:14px auto 6px;
+}
+
+/* RESPONSIVE — smaller screens */
+@media(max-width:420px) {
+  .phone { width:calc(100vw - 20px); border-radius:40px; }
+  .result { font-size:3.2rem; }
+}
+@media(max-width:360px) {
+  .buttons { gap:8px; padding:12px 12px 16px; }
+  .btn { font-size:1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← Portfolio</a>
+
+<div class="phone">
+  <!-- NOTCH -->
+  <div class="phone-notch">
+    <div class="notch-cam"></div>
+    <div class="notch-speaker"></div>
+    <div class="notch-cam"></div>
+  </div>
+
+  <!-- SCREEN -->
+  <div class="screen">
+
+    <!-- HISTORY PANEL -->
+    <div class="history-panel" id="historyPanel">
+      <div class="history-header">
+        <span class="history-title">History</span>
+        <button class="history-close" onclick="closeHistory()">✕</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty" id="historyEmpty">No calculations yet</div>
+      </div>
+      <button class="history-clear" onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <!-- DISPLAY -->
+    <div class="display">
+      <button class="history-btn" onclick="openHistory()" title="History">🕐</button>
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+
+      <!-- Row 1 -->
+      <button class="btn btn-func" onclick="handleFunc('AC')" id="acBtn">AC</button>
+      <button class="btn btn-func" onclick="handleFunc('+/-')">+/-</button>
+      <button class="btn btn-func" onclick="handleFunc('%')">%</button>
+      <button class="btn btn-op"   onclick="handleOp('÷')" id="op-÷">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn btn-num" onclick="handleNum('7')">7</button>
+      <button class="btn btn-num" onclick="handleNum('8')">8</button>
+      <button class="btn btn-num" onclick="handleNum('9')">9</button>
+      <button class="btn btn-op"  onclick="handleOp('×')" id="op-×">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn btn-num" onclick="handleNum('4')">4</button>
+      <button class="btn btn-num" onclick="handleNum('5')">5</button>
+      <button class="btn btn-num" onclick="handleNum('6')">6</button>
+      <button class="btn btn-op"  onclick="handleOp('−')" id="op-−">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn btn-num" onclick="handleNum('1')">1</button>
+      <button class="btn btn-num" onclick="handleNum('2')">2</button>
+      <button class="btn btn-num" onclick="handleNum('3')">3</button>
+      <button class="btn btn-op"  onclick="handleOp('+')" id="op-+">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn btn-num btn-zero" onclick="handleNum('0')">0</button>
+      <button class="btn btn-num" onclick="handleNum('.')">.</button>
+      <button class="btn btn-op"  onclick="handleEquals()">=</button>
+
+    </div>
+  </div>
+
+  <div class="phone-bar"></div>
+</div>
+
+<script>
+// ── STATE ──
+let current    = '0';
+let previous   = '';
+let operator   = null;
+let shouldReset = false;
+let history    = [];
+
+// ── DISPLAY ──
+const resultEl    = document.getElementById('result');
+const expressionEl = document.getElementById('expression');
+
+function updateDisplay(val) {
+  resultEl.textContent = val;
+  // shrink font if long
+  const len = String(val).length;
+  resultEl.className = 'result' + (len > 12 ? ' xsmall' : len > 9 ? ' small' : '');
+}
+
+function updateExpression(val) {
+  expressionEl.textContent = val;
+}
+
+// ── NUMBERS ──
+function handleNum(n) {
+  ripple(event);
+  // reset AC label
+  document.getElementById('acBtn').textContent = 'C';
+
+  if (n === '.' && current.includes('.')) return;
+
+  if (shouldReset || current === '0') {
+    current = (n === '.') ? '0.' : n;
+    shouldReset = false;
+  } else {
+    if (current.length >= 12) return;
+    current += n;
+  }
+  updateDisplay(formatNum(current));
+}
+
+// ── OPERATORS ──
+function handleOp(op) {
+  ripple(event);
+  clearOpHighlight();
+
+  if (operator && !shouldReset) {
+    calculate();
+  }
+
+  previous = current;
+  operator = op;
+  shouldReset = true;
+
+  updateExpression(formatNum(previous) + ' ' + op);
+  highlightOp(op);
+}
+
+// ── EQUALS ──
+function handleEquals() {
+  ripple(event);
+  if (!operator) return;
+  clearOpHighlight();
+
+  const expr = formatNum(previous) + ' ' + operator + ' ' + formatNum(current);
+  calculate();
+  history.unshift({ expr, result: current });
+  updateExpression(expr + ' =');
+  operator = null;
+  shouldReset = true;
+}
+
+// ── CALCULATE ──
+function calculate() {
+  const a = parseFloat(previous);
+  const b = parseFloat(current);
+  let res;
+  switch(operator) {
+    case '+': res = a + b; break;
+    case '−': res = a - b; break;
+    case '×': res = a * b; break;
+    case '÷': res = b !== 0 ? a / b : 'Error'; break;
+    default: return;
+  }
+  // handle float precision
+  if (typeof res === 'number') {
+    res = parseFloat(res.toPrecision(12));
+  }
+  current = String(res);
+  updateDisplay(formatNum(current));
+}
+
+// ── FUNCTIONS ──
+function handleFunc(f) {
+  ripple(event);
+  if (f === 'AC' || f === 'C') {
+    current = '0'; previous = ''; operator = null; shouldReset = false;
+    document.getElementById('acBtn').textContent = 'AC';
+    clearOpHighlight();
+    updateDisplay('0');
+    updateExpression('');
+  }
+  if (f === '+/-') {
+    current = String(parseFloat(current) * -1);
+    updateDisplay(formatNum(current));
+  }
+  if (f === '%') {
+    current = String(parseFloat(current) / 100);
+    updateDisplay(formatNum(current));
+  }
+}
+
+// ── FORMAT NUMBER ──
+function formatNum(val) {
+  if (val === 'Error') return 'Error';
+  const n = parseFloat(val);
+  if (isNaN(n)) return val;
+  // show decimal if user typed it
+  if (String(val).endsWith('.')) return n.toLocaleString() + '.';
+  // show trailing zeros after decimal
+  const parts = String(val).split('.');
+  if (parts[1] !== undefined) {
+    return n.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 8
+    });
+  }
+  return n.toLocaleString();
+}
+
+// ── OPERATOR HIGHLIGHT ──
+function highlightOp(op) {
+  const el = document.getElementById('op-' + op);
+  if (el) el.classList.add('selected');
+}
+function clearOpHighlight() {
+  document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('selected'));
+}
+
+// ── HISTORY ──
+function openHistory() {
+  renderHistory();
+  document.getElementById('historyPanel').classList.add('open');
+}
+function closeHistory() {
+  document.getElementById('historyPanel').classList.remove('open');
+}
+function clearHistory() {
+  history = [];
+  renderHistory();
+}
+function renderHistory() {
+  const list  = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+  list.innerHTML = '';
+  if (history.length === 0) {
+    list.appendChild(empty);
+    empty.style.display = 'block';
+    return;
+  }
+  history.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = `<div class="history-expr">${h.expr}</div><div class="history-res">${formatNum(h.result)}</div>`;
+    div.onclick = () => {
+      current = h.result;
+      updateDisplay(formatNum(current));
+      closeHistory();
+    };
+    list.appendChild(div);
+  });
+}
+
+// ── KEYBOARD SUPPORT ──
+document.addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') handleNum(e.key);
+  else if (e.key === '.')  handleNum('.');
+  else if (e.key === '+')  handleOp('+');
+  else if (e.key === '-')  handleOp('−');
+  else if (e.key === '*')  handleOp('×');
+  else if (e.key === '/')  { e.preventDefault(); handleOp('÷'); }
+  else if (e.key === 'Enter' || e.key === '=') handleEquals();
+  else if (e.key === 'Backspace') {
+    if (current.length > 1) current = current.slice(0,-1);
+    else current = '0';
+    updateDisplay(formatNum(current));
+  }
+  else if (e.key === 'Escape') handleFunc('AC');
+  else if (e.key === '%') handleFunc('%');
+});
+
+// ── RIPPLE EFFECT ──
+function ripple(e) {
+  if (!e || !e.currentTarget) return;
+  const btn = e.currentTarget;
+  const circle = document.createElement('span');
+  circle.className = 'ripple-effect';
+  const rect = btn.getBoundingClientRect();
+  circle.style.left = (e.clientX - rect.left - 25) + 'px';
+  circle.style.top  = (e.clientY - rect.top  - 25) + 'px';
+  btn.appendChild(circle);
+  setTimeout(() => circle.remove(), 500);
+}
+</script>
+
+</body>
+</html>
